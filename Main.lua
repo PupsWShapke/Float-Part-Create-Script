@@ -4,6 +4,7 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+local char = player.Character or player.CharacterAdded:Wait() -- Определяем char здесь для доступа к Screen
 
 -- Переменные для бинда и направления
 local boundKey = Enum.KeyCode.P -- Default key for spawning in direction
@@ -22,6 +23,68 @@ local cframeSpeed = 2 -- Начальная скорость CFrame
 local cframeSpeedEnabled = false -- Переключатель CFrame speed
 local cframeConnection = nil -- Коннекшн для CFrame loop
 local touchConnection = nil -- Коннекшн для touch fling
+local movingPart = nil -- Переменная для Part перед игроком
+local movingPartConnection = nil -- Коннекшн для движения Part
+local movingPartEnabled = false -- Переключатель для Part перед игроком
+local movingPartDistance = 5 -- Расстояние Part от игрока
+
+-- Переменные для объекта Screen
+local screen = Workspace:FindFirstChild("Map"):FindFirstChild("Screens"):FindFirstChild("Leaderboards"):FindFirstChild("Total"):FindFirstChild("Screen")
+local screenVisible = true -- Начальное состояние видимости экрана
+
+-- Инициализация объекта Screen (из первого скрипта)
+if screen then
+    if screen:IsA("BasePart") then
+        screen.Size = Vector3.new(5, 5, 5)
+        screen.CanCollide = true -- Всегда true, как запрошено
+        screen.Transparency = 0 -- Изначально виден
+        RunService.Heartbeat:Connect(function()
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                screen.Position = char.HumanoidRootPart.Position + char.HumanoidRootPart.CFrame.LookVector * 8
+            end
+        end)
+    elseif screen:IsA("Model") then
+        for _, child in pairs(screen:GetChildren()) do
+            if child:IsA("BasePart") then
+                child.Size = Vector3.new(2, 2, 1)
+                child.CanCollide = true -- Всегда true, как запрошено
+                child.Transparency = 0 -- Изначально виден
+            end
+        end
+        RunService.Heartbeat:Connect(function()
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                screen:SetPrimaryPartCFrame(CFrame.new(char.HumanoidRootPart.Position + char.HumanoidRootPart.CFrame.LookVector * 5))
+            end
+        end)
+    end
+    print("Screen уменьшен до 2, 2, 1 и следует перед персонажем с CanCollide = true!")
+else
+    print("Объект по пути Workspace.Map.Screens.Leaderboards.Total.Screen не найден!")
+end
+
+-- Функция для переключения видимости Screen
+local function toggleScreenVisibility()
+    screenVisible = not screenVisible
+    local transparencyValue = screenVisible and 0 or 0.99 -- 0 для видимого, 1 для невидимого
+
+    if screen then
+        if screen:IsA("BasePart") then
+            screen.Transparency = transparencyValue
+            -- CanCollide остается true, как запрошено
+        elseif screen:IsA("Model") then
+            for _, child in pairs(screen:GetChildren()) do
+                if child:IsA("BasePart") then
+                    child.Transparency = transparencyValue
+                    -- CanCollide остается true, как запрошено
+                end
+            end
+        end
+        print("Screen Visible: " .. tostring(screenVisible))
+    else
+        print("Screen object not found for toggling visibility!")
+    end
+end
+
 
 -- Function to create Part in direction under feet (static)
 local function createPart()
@@ -96,16 +159,13 @@ end
 local function deleteAllParts()
     local partsDeleted = 0
     for _, child in ipairs(Workspace:GetChildren()) do
-        if child:IsA("Part") and child.Name == "GeneratedPart" then
+        if child:IsA("Part") and (child.Name == "GeneratedPart" or child.Name == "MovingPart") then
             child:Destroy()
             partsDeleted = partsDeleted + 1
         end
     end
-    print("Deleted " .. partsDeleted .. " GeneratedPart(s)")
+    print("Deleted " .. partsDeleted .. " GeneratedPart(s) and MovingPart(s)")
 end
-
--- Function to delete all parts and GUI
-
 
 -- Function to activate fling on touched player
 local function activateFlingOnTouch(hit)
@@ -143,6 +203,11 @@ local function deleteAll()
         renderConnection:Disconnect()
         renderConnection = nil
         print("Render connection disconnected")
+    end
+    if movingPartConnection then
+        movingPartConnection:Disconnect()
+        movingPartConnection = nil
+        print("Moving Part connection disconnected")
     end
     if cframeConnection then
         cframeConnection:Disconnect()
@@ -492,6 +557,23 @@ UserInputService.InputEnded:Connect(function(input)
         draggingCframe = false
     end
 end)
+
+-- Новый переключатель видимости для Screen
+local screenVisibilityToggle = Instance.new("TextButton")
+screenVisibilityToggle.Name = "ScreenVisibilityToggle"
+screenVisibilityToggle.Size = UDim2.new(1, 0, 0, 30)
+screenVisibilityToggle.Position = UDim2.new(0, 0, 0.8, 0) -- Размещаем под Moving Part Toggle
+screenVisibilityToggle.BackgroundColor3 = Color3.fromRGB(150, 0, 200) -- Пурпурный
+screenVisibilityToggle.Text = "Screen Visibility: On" -- Изначально On
+screenVisibilityToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+screenVisibilityToggle.TextSize = 16
+screenVisibilityToggle.Parent = functionsColumn
+
+screenVisibilityToggle.MouseButton1Click:Connect(function()
+    toggleScreenVisibility()
+    screenVisibilityToggle.Text = "Screen Visibility: " .. (screenVisible and "On" or "Off")
+end)
+
 
 -- Правая колонка для настроек (Settings Column)
 local settingsColumn = Instance.new("Frame")
