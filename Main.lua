@@ -43,7 +43,7 @@ local movingPartDistance = 5 -- Distance of Part from player
 local screen = Workspace:FindFirstChild("Map"):FindFirstChild("Screens"):FindFirstChild("Leaderboards"):FindFirstChild("Total"):FindFirstChild("Screen")
 local screenVisible = true -- Initial visibility state
 local surfacegui = screen:FindFirstChild("SurfaceGui")
-surfacegui:Destroy()
+surfacegui.Enabled = false
 
 -- Инициализация объекта Screen
 if screen then
