@@ -70,7 +70,7 @@ if screen then
         screen.Transparency = 0
         table.insert(connections, RunService.Heartbeat:Connect(function()
             if char and char:FindFirstChild("HumanoidRootPart") then
-                screen.Position = char.HumanoidRootPart.Position + char.HumanoidRootPart.CFrame.LookVector * 5
+                screen.Position = char.HumanoidRootPart.Position + char.HumanoidRootPart.CFrame.LookVector * 7
             end
         end))
     elseif screen:IsA("Model") then
@@ -83,7 +83,7 @@ if screen then
         end
         table.insert(connections, RunService.Heartbeat:Connect(function()
             if char and char:FindFirstChild("HumanoidRootPart") then
-                screen:SetPrimaryPartCFrame(CFrame.new(char.HumanoidRootPart.Position + char.HumanoidRootPart.CFrame.LookVector * 5))
+                screen:SetPrimaryPartCFrame(CFrame.new(char.HumanoidRootPart.Position + char.HumanoidRootPart.CFrame.LookVector * 7))
             end
         end))
     end
